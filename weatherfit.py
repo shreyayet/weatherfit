@@ -1,46 +1,75 @@
 import requests
-city = input("Enter your city: ")
-api_key = "2c5f94e53931693d22cd452c2678ed8e"
+import tkinter as tk
+from tkinter import messagebox
 
-url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=imperial"
+# Your API key
+api_key = "2c5f94e53931693d22cd452c2678ed8e"  # ← Replace this with your real API key
 
-# Making a GET request to the OpenWeatherMap API
-response = requests.get(url)
+# Function to get weather and suggest outfit
+def get_weather():
+    city = city_entry.get()
 
-# Converting the response to JSON format (dictionary format)
-data = response.json()
+    if not city:
+        messagebox.showerror("Error", "Please enter a city.")
+        return
 
-# Print out the temperature and weather description
-if response.status_code == 200:
-    temp = data['main']['temp']
-    description = data['weather'][0]['description']
-    wind_speed = data['wind']['speed']
+    url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=imperial"
 
-    print(f"\nWeather in {city.title()}:")
-    print (f"Temperature: {temp}°F")
-    print (f"Condition: {description}")
-    print (f"Wind Speed: {wind_speed} mph")
-else:
-    print("\nSorry! The weather for that city is unavailable. Please try again!")
+    try:
+        response = requests.get(url)
+        data = response.json()
 
+        if response.status_code == 200:
+            temp = data["main"]["temp"]
+            description = data["weather"][0]["description"]
+            wind_speed = data["wind"]["speed"]
 
-# Outfit suggestion logic
-print("\nHere's what you should wear:")
+            result = f"🌡️ {temp}°F\n☁️ {description.title()}\n💨 Wind: {wind_speed} mph\n\n"
 
-if temp < 40:
-    print("It's chilly! 🥶 Wear a coat before you leave.")
-elif 40 <= temp < 55:
-    if "wind" in description or wind_speed > 20:
-        print("It's chilly and windy. 🌬️ Try pairing jeans with a sweater today, or wear a matching sweat set.")
-    else: 
-        print("Pair jeans with a light sweater or cardigan. Layer up just in case!")
-elif 55 <= temp < 70:
-    print("It's nice out!🌤️ But layer up to be safe, a light jacket/sweater or long-sleeve shirt should do the trick.")
-elif 70 <= temp < 80:
-    print("It's warm! 🌞 The perfect day for a flowy dress.")
-else: 
-    print("It's hot! 🍳 Stay cool and wear shorts and a tank top.")
+            # Outfit suggestions
+            if temp < 40:
+                result += "It's cold! 🥶 Bring a coat before you head out!"
+            elif 40 <= temp < 55:
+                if "wind" in description or wind_speed > 20:
+                    result += "It’s chilly and windy! 🌬️ Try pairing jeans with a sweater - layer up!"
+                else:
+                    result += "It's a bit chilly! Wear a sweater or light jacket with jeans or leggings. Bring layers just in case. If you want to be comfy, wear a sweat set! "
+            elif 55 <= temp < 70:
+                result += "It's nice out! 🌤️ Bring a light jacket or wear a long sleeve shirt for when it get's cooler later."
+            elif 70 <= temp < 80:
+                result += "It’s warm! 🌞 Wear a flowy dress today! Or a cute shirt and shorts."
+            else:
+                result += "It’s hot! 🍳 Go for light fabrics — tank tops, dresses, or athletic wear."
 
-# Extra tip if the sun is out
-if "sun" in description or "clear" in description:
-    print("☀️ And it's sunny! Bring sunnies & don't forget sunscreen.")
+            if "sun" in description or "clear" in description:
+                result += "And the sun is out today — bring sunnies and don't forget sunscreen! 😎"
+
+            output_label.config(text=result)
+
+        else:
+            messagebox.showerror("Error", f"Could not get weather for '{city}'. Please try again!")
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Something went wrong:\n{e}")
+
+# --- GUI Setup ---
+root = tk.Tk()
+root.title("WeatherFit ☁️")
+
+# City input
+city_label = tk.Label(root, text="Enter your city:")
+city_label.pack(pady=(10, 0))
+
+city_entry = tk.Entry(root, width=30)
+city_entry.pack(pady=(0, 10))
+
+# Get Weather button
+get_weather_btn = tk.Button(root, text="Get Weather", command=get_weather)
+get_weather_btn.pack()
+
+# Output label
+output_label = tk.Label(root, text="", justify="left", wraplength=300)
+output_label.pack(padx=10, pady=15)
+
+# Run the GUI app
+root.mainloop()
